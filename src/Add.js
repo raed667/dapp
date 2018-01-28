@@ -22,8 +22,8 @@ class Add extends Component {
   }
 
   onAddNew(name) {
-    notification.success({
-      message: "Notification",
+    notification.info({
+      message: "Submitting...",
       description: `${name}`
     });
     this.props.onAdd(name);

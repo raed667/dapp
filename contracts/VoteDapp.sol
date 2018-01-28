@@ -22,6 +22,10 @@ contract VoteDapp {
     DogAdded(msg.sender, _name);
   }
 
+  function submitVote(uint256 index) {
+    candidates[index].voteCount++;
+  }
+
   function getCandidatesCount() public constant returns (uint256 nbrCandidates) {
     return candidates.length;
   }

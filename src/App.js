@@ -39,15 +39,21 @@ class App extends Component {
           web3: results.web3
         });
 
-        // Instantiate contract once web3 provided.
-        this.instantiateContract();
+        // Call contract once web3 provided.
+        this.getCandidatesList();
       })
-      .catch(() => {
-        console.log("Error finding web3.");
+      .catch(e => {
+        console.error("Error setting up web3", e);
+
+        notification.error({
+          message: "ERROR",
+          duration: 0,
+          description: `${e}`
+        });
       });
   }
 
-  instantiateContract = () => {
+  getCandidatesList = () => {
     voteDapp.setProvider(this.state.web3.currentProvider);
 
     let voteDappInstance; // contract instance
@@ -74,6 +80,7 @@ class App extends Component {
               const dogs = this.state.dogs;
 
               dogs.push({
+                index,
                 voteCount: candidate[0].toNumber(),
                 name: this.state.web3.toUtf8(candidate[1])
               });
@@ -94,6 +101,14 @@ class App extends Component {
     this.setState({
       selectedTab: key
     });
+    if (key === "vote") {
+      // empty list
+      this.setState({
+        dogs: []
+      });
+
+      this.getCandidatesList();
+    }
   };
 
   onAddCandidate = name => {
@@ -141,6 +156,40 @@ class App extends Component {
     });
   }
 
+  onVoteSuccess = () => {
+    notification.success({
+      message: "Voted "
+    });
+  }
+
+  onVote = candidate => {
+    console.log(candidate);
+
+    //////////
+    let voteDappInstance; // contract instance
+
+    voteDapp
+      .deployed()
+      .then(instance => {
+        voteDappInstance = instance;
+        return voteDappInstance
+          .submitVote(candidate.index, {
+            from: this.state.accounts[0]
+          })
+          .then(result => {
+            console.log("Vote success", result);
+            this.onVoteSuccess();
+          });
+      })
+      .then(result => {
+        console.log(result);
+      })
+      .catch(err => {
+        console.warn(err);
+      });
+    //////////
+  };
+
   render() {
     return (
       <Tabs defaultActiveKey="1" onChange={this.onTabChange}>
@@ -152,7 +201,11 @@ class App extends Component {
           }
           key="vote"
         >
-          <Vote dogs={this.state.dogs} currentTab={this.state.selectedTab} />
+          <Vote
+            dogs={this.state.dogs}
+            currentTab={this.state.selectedTab}
+            submitVote={this.onVote}
+          />
         </TabPane>
         <TabPane
           tab={

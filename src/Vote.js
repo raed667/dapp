@@ -1,29 +1,17 @@
 import React, { Component } from "react";
 
 import ContentLoader from "react-content-loader";
-import { Table, Icon } from "antd";
+import { Table, Icon, notification } from "antd";
 
 class Vote extends Component {
   constructor(props) {
     super(props);
 
     this.loadDogs = this.loadDogs.bind(this);
+    this.onVoteClick = this.onVoteClick.bind(this);
 
     this.state = {
-      dogs: [
-        {
-          key: "1",
-          name: "John Brown"
-        },
-        {
-          key: "2",
-          name: "Jim Green"
-        },
-        {
-          key: "3",
-          name: "Joe Black"
-        }
-      ]
+      loading: false
     };
   }
 
@@ -37,7 +25,7 @@ class Vote extends Component {
       title: "Action",
       key: "action",
       render: (text, record) => (
-        <span>
+        <span >
           <a>
             <Icon onClick={() => this.onVoteClick(record)} type="heart" />
           </a>
@@ -58,14 +46,19 @@ class Vote extends Component {
   }
 
   loadDogs() {
-    console.log("load dogs");
+    console.log("load dogs...");
     this.setState({
       loading: true
     });
   }
 
   onVoteClick(record) {
+    notification.info({
+      message: "Voting...",
+      description: `${record.name}`
+    });
     console.log(record);
+    this.props.submitVote(record);    
   }
 
   render() {
@@ -73,7 +66,7 @@ class Vote extends Component {
     if (this.state.loading) {
       display = <ContentLoader type="bullet-list" />;
     } else {
-      display = <Table columns={this.columns} dataSource={this.props.dogs} />;
+      display = <Table rowKey="name" columns={this.columns} dataSource={this.props.dogs} />;
     }
 
     return display;
