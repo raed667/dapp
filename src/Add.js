@@ -16,17 +16,17 @@ class Add extends Component {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        this.onAddNew(values.name, values.img);
+        this.onAddNew(values.name);
       }
     });
   }
 
-  onAddNew(name, img) {
+  onAddNew(name) {
     notification.success({
-      message: "Notification Title",
-      description: `${name}, ${img}`
+      message: "Notification",
+      description: `${name}`
     });
-    this.props.onAdd(name, img);
+    this.props.onAdd(name);
   }
 
   render() {
@@ -41,16 +41,6 @@ class Add extends Component {
             <Input
               prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />}
               placeholder="Name"
-            />
-          )}
-        </FormItem>
-        <FormItem>
-          {getFieldDecorator("img", {
-            rules: [{ required: true, message: "Please input an image!" }]
-          })(
-            <Input
-              prefix={<Icon type="link" style={{ color: "rgba(0,0,0,.25)" }} />}
-              placeholder="Image"
             />
           )}
         </FormItem>

@@ -7,27 +7,20 @@ class Vote extends Component {
   constructor(props) {
     super(props);
 
-    this.imgStyles = {
-      width: 128
-    };
-
     this.loadDogs = this.loadDogs.bind(this);
 
     this.state = {
       dogs: [
         {
           key: "1",
-          img: "https://i.imgur.com/0ETW6je.jpg",
           name: "John Brown"
         },
         {
           key: "2",
-          img: "https://i.imgur.com/JlqlvNu.jpg",
           name: "Jim Green"
         },
         {
           key: "3",
-          img: "https://i.imgur.com/6Gjw3TN.jpg",
           name: "Joe Black"
         }
       ]
@@ -35,12 +28,6 @@ class Vote extends Component {
   }
 
   columns = [
-    {
-      title: "Picture",
-      dataIndex: "img",
-      key: "img",
-      render: src => <img style={this.imgStyles} src={src} alt="dog" />
-    },
     {
       title: "Name",
       dataIndex: "name",

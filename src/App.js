@@ -70,13 +70,12 @@ class App extends Component {
           for (let index = 0; index < candidateCount; index++) {
             // Get every candidate
             console.log(`Candidate :${index}`);
-            voteDappInstance.getUser.call(index).then(candidate => {
+            voteDappInstance.getCandidate.call(index).then(candidate => {
               const dogs = this.state.dogs;
 
               dogs.push({
                 voteCount: candidate[0].toNumber(),
-                name: this.state.web3.toUtf8(candidate[1]),
-                img: this.state.web3.toUtf8(candidate[2])
+                name: this.state.web3.toUtf8(candidate[1])
               });
 
               this.setState({
@@ -97,34 +96,31 @@ class App extends Component {
     });
   };
 
-  onAddCandidate = (name, img) => {
+  onAddCandidate = name => {
     let voteDappInstance; // contract instance
 
-    console.log("name ", this.state.web3.toHex(name));
-    
+    const nameHex = this.state.web3.fromAscii(name);
+    console.log("Name", nameHex, this.state.web3.toUtf8(nameHex));
+
     voteDapp
       .deployed()
       .then(instance => {
-        console.log("voteDappInstance");
         voteDappInstance = instance;
         return voteDappInstance
-          .addCandidate(
-            this.state.web3.toHex(name),
-            this.state.web3.toHex(img),
-            {
-              from: this.state.accounts[0]
-            }
-          )
+          .addCandidate(nameHex, {
+            from: this.state.accounts[0]
+          })
           .then(result => {
-            console.log("added success", result);
+            console.log("Added success", result);
 
             // Events
             for (var i = 0; i < result.logs.length; i++) {
               var log = result.logs[i];
 
               if (log.event === "DogAdded") {
-                console.log(this.state.web3.toUtf8(log.args.name));
                 // We found the event!
+                console.log(this.state.web3.toUtf8(log.args.name));
+                this.onAddEventSuccess(this.state.web3.toUtf8(log.args.name));
                 break;
               }
             }

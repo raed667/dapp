@@ -5,7 +5,6 @@ contract VoteDapp {
   struct Dog {
     uint voteCount;
     string name;
-    string img;
   }
 
   address public owner;
@@ -18,8 +17,8 @@ contract VoteDapp {
     owner = msg.sender;
   }
 
-  function addCandidate(string _name, string _img) public {
-    candidates.push(Dog(0, _name, _img));
+  function addCandidate(string _name) public {
+    candidates.push(Dog(0, _name));
     DogAdded(msg.sender, _name);
   }
 
@@ -27,7 +26,8 @@ contract VoteDapp {
     return candidates.length;
   }
   
-  function getUser(uint index) public constant returns(uint, string, string) {
-    return (candidates[index].voteCount, candidates[index].name, candidates[index].img);
+  function getCandidate(uint index) public constant returns(uint, string) {
+    return (candidates[index].voteCount, candidates[index].name);
   }
 }
+
