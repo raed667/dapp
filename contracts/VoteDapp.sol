@@ -6,7 +6,8 @@ contract VoteDapp {
     uint voteCount;
     string name;
   }
-
+    
+  uint public startTime;
   address public owner;
   Dog[] private candidates;
   
@@ -15,6 +16,7 @@ contract VoteDapp {
   // Constractor
   function VoteDapp() public {
     owner = msg.sender;
+    startTime = now;
   }
 
   function addCandidate(string _name) public {
@@ -22,7 +24,7 @@ contract VoteDapp {
     DogAdded(msg.sender, _name);
   }
 
-  function submitVote(uint256 index) {
+  function submitVote(uint256 index) public {
     candidates[index].voteCount++;
   }
 
@@ -32,6 +34,26 @@ contract VoteDapp {
   
   function getCandidate(uint index) public constant returns(uint, string) {
     return (candidates[index].voteCount, candidates[index].name);
+  }
+  
+  // Modifier, Check if time is up
+    modifier isTimeUp() {
+        require(now > startTime + 5 minutes);  
+        _;
+    }
+  
+  function getWinner() public isTimeUp constant returns (uint, string) {
+     uint winnerIndex = 0;
+     uint winnerVotes = 0;
+     
+     for(uint x = 0; x < candidates.length; x++) {
+        if (candidates[x].voteCount > winnerVotes) {
+            winnerIndex = x;
+            winnerVotes = candidates[x].voteCount;
+        }
+    }
+    
+    return (candidates[winnerIndex].voteCount,candidates[winnerIndex].name);
   }
 }
 
