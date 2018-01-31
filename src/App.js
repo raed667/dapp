@@ -11,6 +11,7 @@ import getWeb3 from "./utils/getWeb3";
 // Componenets
 import Vote from "./Vote";
 import Add from "./Add";
+import Result from "./Result";
 
 // Contract
 const contract = require("truffle-contract");
@@ -160,14 +161,13 @@ class App extends Component {
     notification.success({
       message: "Voted "
     });
-  }
+  };
 
   onVote = candidate => {
     console.log(candidate);
 
     //////////
     let voteDappInstance; // contract instance
-
     voteDapp
       .deployed()
       .then(instance => {
@@ -188,6 +188,42 @@ class App extends Component {
         console.warn(err);
       });
     //////////
+  };
+
+  onCheckResultSuccess = result => {
+    const winnerVote = result[0];
+    const winnerName = result[1];
+    this.setState({
+      winner: {
+        vote: winnerVote.toNumber(),
+        name: this.state.web3.toUtf8(winnerName)
+      }
+    });
+  };
+
+  onCheckResult = () => {
+    notification.info({
+      message: "Checking results..."
+    });
+
+    let voteDappInstance; // contract instance
+    voteDapp
+      .deployed()
+      .then(instance => {
+        voteDappInstance = instance;
+        return voteDappInstance.getWinner
+          .call()
+          .then(result => {
+            // console.log(result);
+            this.onCheckResultSuccess(result);
+          })
+          .catch(err => {
+            console.warn(err);
+          });
+      })
+      .catch(err => {
+        console.warn(err);
+      });
   };
 
   render() {
@@ -228,7 +264,7 @@ class App extends Component {
           }
           key="results"
         >
-          Content of Tab Pane 3
+          <Result winner={this.state.winner} onCheckResult={this.onCheckResult} />
         </TabPane>
       </Tabs>
     );

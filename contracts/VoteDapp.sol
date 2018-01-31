@@ -41,15 +41,18 @@ contract VoteDapp {
         require(now > startTime + 5 minutes);  
         _;
     }
+
+    modifier isAdmin(){
+      require(msg.sender == owner);
+      _;
+    }
   
-  function getWinner() public isTimeUp constant returns (uint, string) {
+  function getWinner() public isTimeUp constant returns (uint voteCount, string name) {
      uint winnerIndex = 0;
-     uint winnerVotes = 0;
      
-     for(uint x = 0; x < candidates.length; x++) {
-        if (candidates[x].voteCount > winnerVotes) {
+     for (uint x = 0; x < candidates.length; x++) {
+        if (candidates[x].voteCount > candidates[winnerIndex].voteCount) {
             winnerIndex = x;
-            winnerVotes = candidates[x].voteCount;
         }
     }
     
