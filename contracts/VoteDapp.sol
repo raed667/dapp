@@ -47,7 +47,7 @@ contract VoteDapp {
       _;
     }
   
-  function getWinner() public isTimeUp constant returns (uint voteCount, string name) {
+  function getWinner() public  constant returns (uint voteCount, string name) {
      uint winnerIndex = 0;
      
      for (uint x = 0; x < candidates.length; x++) {

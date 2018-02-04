@@ -152,14 +152,14 @@ class App extends Component {
 
   onAddEventSuccess(index) {
     notification.success({
-      message: "Added " + index,
+      message: "Added: " + index,
       description: `${index}`
     });
   }
 
   onVoteSuccess = () => {
     notification.success({
-      message: "Voted "
+      message: "Voted"
     });
   };
 

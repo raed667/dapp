@@ -9,8 +9,8 @@ class Result extends Component {
     if (this.props.winner) {
       winnerPanel = (
         <div>
-          <img width="100%" alt="winner" src="http://audneal.typepad.com/.a/6a010534aaa6ea970c0168e8d49fe3970c-pi" />{" "}
-          this.props.winner.vote + " | " + this.props.winner.name
+          <img width="100%" alt="winner" src="/winner.svg" />{" "}
+          {this.props.winner.name} ({this.props.winner.vote})
         </div>
       );
     }
