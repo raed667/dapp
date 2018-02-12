@@ -2,16 +2,16 @@ pragma solidity ^0.4.2;
 
 contract VoteDapp {
   
-  struct Dog {
+  struct Candidate {
     uint voteCount;
     string name;
   }
     
   uint public startTime;
   address public owner;
-  Dog[] private candidates;
+  Candidate[] private candidates;
   
-  event DogAdded(address indexed _from, string name);
+  event CandidateAdded(address indexed _from, string name);
  
   // Constractor
   function VoteDapp() public {
@@ -20,8 +20,8 @@ contract VoteDapp {
   }
 
   function addCandidate(string _name) public {
-    candidates.push(Dog(0, _name));
-    DogAdded(msg.sender, _name);
+    candidates.push(Candidate(0, _name));
+    CandidateAdded(msg.sender, _name);
   }
 
   function submitVote(uint256 index) public {
@@ -36,18 +36,7 @@ contract VoteDapp {
     return (candidates[index].voteCount, candidates[index].name);
   }
   
-  // Modifier, Check if time is up
-    modifier isTimeUp() {
-        require(now > startTime + 5 minutes);  
-        _;
-    }
-
-    modifier isAdmin(){
-      require(msg.sender == owner);
-      _;
-    }
-  
-  function getWinner() public  constant returns (uint voteCount, string name) {
+  function getWinner() public constant returns (uint voteCount, string name) {
      uint winnerIndex = 0;
      
      for (uint x = 0; x < candidates.length; x++) {

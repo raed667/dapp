@@ -9,7 +9,7 @@ class Result extends Component {
     if (this.props.winner) {
       winnerPanel = (
         <div>
-          <img width="100%" alt="winner" src="/winner.svg" />{" "}
+          <img width="120px" alt="winner" src="/winner.svg" />{" "}
           {this.props.winner.name} ({this.props.winner.vote})
         </div>
       );

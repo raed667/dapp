@@ -7,8 +7,6 @@ class Vote extends Component {
   constructor(props) {
     super(props);
 
-    this.loadDogs = this.loadDogs.bind(this);
-    this.onVoteClick = this.onVoteClick.bind(this);
 
     this.state = {
       loading: false
@@ -36,23 +34,23 @@ class Vote extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.currentTab === "vote") {
-      this.loadDogs();
+      this.loadCandidates();
     }
-    if (nextProps.dogs.length > 0) {
+    if (nextProps.candidates.length > 0) {
       this.setState({
         loading: false
       });
     }
   }
 
-  loadDogs() {
-    console.log("load dogs...");
+  loadCandidates = () => {
+    console.log("load candidates...");
     this.setState({
       loading: true
     });
   }
 
-  onVoteClick(record) {
+  onVoteClick  = (record) => {
     notification.info({
       message: "Voting...",
       description: `${record.name}`
@@ -66,7 +64,7 @@ class Vote extends Component {
     if (this.state.loading) {
       display = <ContentLoader type="bullet-list" />;
     } else {
-      display = <Table rowKey="name" columns={this.columns} dataSource={this.props.dogs} />;
+      display = <Table rowKey="name" columns={this.columns} dataSource={this.props.candidates} />;
     }
 
     return display;

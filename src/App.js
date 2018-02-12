@@ -18,13 +18,14 @@ const contract = require("truffle-contract");
 import VoteDappContract from "../build/contracts/VoteDapp.json";
 const voteDapp = contract(VoteDappContract);
 
+
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
       selectedTab: "vote",
-      dogs: [],
+      candidates: [],
       accounts: []
     };
 
@@ -35,17 +36,18 @@ class App extends Component {
   componentWillMount() {
     getWeb3
       .then(results => {
-        console.log(results.web3);
-        this.setState({
-          web3: results.web3
-        });
-
-        // Call contract once web3 provided.
-        this.getCandidatesList();
+        if(results !== null){
+          console.log(results.web3);
+          this.setState({
+            web3: results.web3
+          });
+          // Call contract once web3 provided.
+          this.getCandidatesList(this.state.web3);
+        } else {
+          throw Error("web3 error");
+        }
       })
       .catch(e => {
-        console.error("Error setting up web3", e);
-
         notification.error({
           message: "ERROR",
           duration: 0,
@@ -54,13 +56,13 @@ class App extends Component {
       });
   }
 
-  getCandidatesList = () => {
-    voteDapp.setProvider(this.state.web3.currentProvider);
+  getCandidatesList = (web3) => {
+    voteDapp.setProvider(web3.currentProvider);
 
     let voteDappInstance; // contract instance
 
     // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
+    web3.eth.getAccounts((error, accounts) => {
       voteDapp
         .deployed()
         .then(instance => {
@@ -78,16 +80,16 @@ class App extends Component {
             // Get every candidate
             console.log(`Candidate :${index}`);
             voteDappInstance.getCandidate.call(index).then(candidate => {
-              const dogs = this.state.dogs;
+              const candidates = this.state.candidates;
 
-              dogs.push({
+              candidates.push({
                 index,
                 voteCount: candidate[0].toNumber(),
-                name: this.state.web3.toUtf8(candidate[1])
+                name: web3.toUtf8(candidate[1])
               });
 
               this.setState({
-                dogs
+                candidates
               });
             });
           }
@@ -96,20 +98,6 @@ class App extends Component {
           console.warn(err);
         });
     });
-  };
-
-  onTabChange = key => {
-    this.setState({
-      selectedTab: key
-    });
-    if (key === "vote") {
-      // empty list
-      this.setState({
-        dogs: []
-      });
-
-      this.getCandidatesList();
-    }
   };
 
   onAddCandidate = name => {
@@ -133,7 +121,7 @@ class App extends Component {
             for (var i = 0; i < result.logs.length; i++) {
               var log = result.logs[i];
 
-              if (log.event === "DogAdded") {
+              if (log.event === "CandidateAdded") {
                 // We found the event!
                 console.log(this.state.web3.toUtf8(log.args.name));
                 this.onAddEventSuccess(this.state.web3.toUtf8(log.args.name));
@@ -202,10 +190,6 @@ class App extends Component {
   };
 
   onCheckResult = () => {
-    notification.info({
-      message: "Checking results..."
-    });
-
     let voteDappInstance; // contract instance
     voteDapp
       .deployed()
@@ -221,9 +205,28 @@ class App extends Component {
             console.warn(err);
           });
       })
-      .catch(err => {
-        console.warn(err);
+      .catch(e => {
+        console.warn(e);
+        notification.error({
+          message: "ERROR",
+          duration: 0,
+          description: `${e}`
+        });
       });
+  };
+
+  onTabChange = key => {
+    this.setState({
+      selectedTab: key
+    });
+    if (key === "vote") {
+      // empty list
+      this.setState({
+        candidates: []
+      });
+
+      this.getCandidatesList(this.state.web3);
+    }
   };
 
   render() {
@@ -238,7 +241,7 @@ class App extends Component {
           key="vote"
         >
           <Vote
-            dogs={this.state.dogs}
+            candidates={this.state.candidates}
             currentTab={this.state.selectedTab}
             submitVote={this.onVote}
           />
