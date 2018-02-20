@@ -16,8 +16,6 @@ import Result from "./Result";
 // Contract
 const contract = require("truffle-contract");
 import VoteDappContract from "../build/contracts/VoteDapp.json";
-const voteDapp = contract(VoteDappContract);
-
 
 class App extends Component {
   constructor(props) {
@@ -36,11 +34,13 @@ class App extends Component {
   componentWillMount() {
     getWeb3
       .then(results => {
-        if(results !== null){
+        if (results !== null) {
           console.log(results.web3);
           this.setState({
             web3: results.web3
           });
+          this.voteDapp.setProvider(results.web3.currentProvider);
+
           // Call contract once web3 provided.
           this.getCandidatesList(this.state.web3);
         } else {
@@ -56,86 +56,58 @@ class App extends Component {
       });
   }
 
-  getCandidatesList = (web3) => {
-    voteDapp.setProvider(web3.currentProvider);
-
-    let voteDappInstance; // contract instance
-
-    // Get accounts.
-    web3.eth.getAccounts((error, accounts) => {
-      voteDapp
-        .deployed()
-        .then(instance => {
-          this.setState({
-            accounts: accounts
-          });
-          voteDappInstance = instance;
-          return voteDappInstance.getCandidatesCount.call();
-        })
-        .then(result => {
-          const candidateCount = result.toNumber(); // Bignumber js
-          console.log(`There are ${candidateCount} candidates`);
-
-          for (let index = 0; index < candidateCount; index++) {
-            // Get every candidate
-            console.log(`Candidate :${index}`);
-            voteDappInstance.getCandidate.call(index).then(candidate => {
-              const candidates = this.state.candidates;
-
-              candidates.push({
-                index,
-                voteCount: candidate[0].toNumber(),
-                name: web3.toUtf8(candidate[1])
-              });
-
-              this.setState({
-                candidates
-              });
-            });
-          }
-        })
-        .catch(err => {
-          console.warn(err);
-        });
-    });
+  getContractInstance = async web3 => {
+    this.voteDapp.setProvider(web3.currentProvider);
+    const instance = await this.voteDapp.deployed();
+    return instance;
   };
 
-  onAddCandidate = name => {
-    let voteDappInstance; // contract instance
+  getCandidatesList = async web3 => {
+    const contract = await this.getContractInstance(web3);
 
+    const candidateCount = await contract.getCandidatesCount.call();
+    console.log(`There are ${candidateCount.toNumber()} candidates`);
+
+    for (let index = 0; index < candidateCount.toNumber(); index++) {
+      const candidate = await contract.getCandidate.call(index);
+
+      const candidates = this.state.candidates;
+
+      candidates.push({
+        index,
+        voteCount: candidate[0].toNumber(),
+        name: web3.toUtf8(candidate[1])
+      });
+
+      this.setState({
+        candidates
+      });
+    }
+  };
+
+  onAddCandidate = async (name, web3) => {
     const nameHex = this.state.web3.fromAscii(name);
     console.log("Name", nameHex, this.state.web3.toUtf8(nameHex));
 
-    voteDapp
-      .deployed()
-      .then(instance => {
-        voteDappInstance = instance;
-        return voteDappInstance
-          .addCandidate(nameHex, {
-            from: this.state.accounts[0]
-          })
-          .then(result => {
-            console.log("Added success", result);
+    const contract = await this.getContractInstance(web3);
 
-            // Events
-            for (var i = 0; i < result.logs.length; i++) {
-              var log = result.logs[i];
+    const result = await contract.addCandidate(nameHex, {
+      from: web3.eth.accounts[0]
+    });
 
-              if (log.event === "CandidateAdded") {
-                // We found the event!
-                console.log(this.state.web3.toUtf8(log.args.name));
-                this.onAddEventSuccess(this.state.web3.toUtf8(log.args.name));
-                break;
-              }
-            }
-          });
-      })
-      .then(result => {
-        console.log(result);
-      })
-      .catch(err => {
-        console.warn(err);
-      });
+    console.log("Added success", result);
+
+    // Events
+    for (var i = 0; i < result.logs.length; i++) {
+      var log = result.logs[i];
+
+      if (log.event === "CandidateAdded") {
+        // We found the event!
+        console.log(this.state.web3.toUtf8(log.args.name));
+        this.onAddEventSuccess(this.state.web3.toUtf8(log.args.name));
+        break;
+      }
+    }
   };
 
   onAddEventSuccess(index) {
@@ -151,31 +123,15 @@ class App extends Component {
     });
   };
 
-  onVote = candidate => {
+  onVote = async (candidate, web3) => {
     console.log(candidate);
 
-    //////////
-    let voteDappInstance; // contract instance
-    voteDapp
-      .deployed()
-      .then(instance => {
-        voteDappInstance = instance;
-        return voteDappInstance
-          .submitVote(candidate.index, {
-            from: this.state.accounts[0]
-          })
-          .then(result => {
-            console.log("Vote success", result);
-            this.onVoteSuccess();
-          });
-      })
-      .then(result => {
-        console.log(result);
-      })
-      .catch(err => {
-        console.warn(err);
-      });
-    //////////
+    const contract = await this.getContractInstance(web3);
+    const result = await contract.submitVote(candidate.index, {
+      from: web3.eth.accounts[0]
+    });
+    console.log("Vote success", result);
+    this.onVoteSuccess();
   };
 
   onCheckResultSuccess = result => {
@@ -189,30 +145,10 @@ class App extends Component {
     });
   };
 
-  onCheckResult = () => {
-    let voteDappInstance; // contract instance
-    voteDapp
-      .deployed()
-      .then(instance => {
-        voteDappInstance = instance;
-        return voteDappInstance.getWinner
-          .call()
-          .then(result => {
-            // console.log(result);
-            this.onCheckResultSuccess(result);
-          })
-          .catch(err => {
-            console.warn(err);
-          });
-      })
-      .catch(e => {
-        console.warn(e);
-        notification.error({
-          message: "ERROR",
-          duration: 0,
-          description: `${e}`
-        });
-      });
+  onCheckResult = async web3 => {
+    const contract = await this.getContractInstance(web3);
+    const result = await contract.getWinner.call();
+    this.onCheckResultSuccess(result);
   };
 
   onTabChange = key => {
@@ -243,7 +179,7 @@ class App extends Component {
           <Vote
             candidates={this.state.candidates}
             currentTab={this.state.selectedTab}
-            submitVote={this.onVote}
+            submitVote={val => this.onVote(val, this.state.web3)}
           />
         </TabPane>
         <TabPane
@@ -255,7 +191,7 @@ class App extends Component {
           key="add"
         >
           <Add
-            onAdd={this.onAddCandidate}
+            onAdd={value => this.onAddCandidate(value, this.state.web3)}
             currentTab={this.state.selectedTab}
           />
         </TabPane>
@@ -267,7 +203,10 @@ class App extends Component {
           }
           key="results"
         >
-          <Result winner={this.state.winner} onCheckResult={this.onCheckResult} />
+          <Result
+            winner={this.state.winner}
+            onCheckResult={() => this.onCheckResult(this.state.web3)}
+          />
         </TabPane>
       </Tabs>
     );
