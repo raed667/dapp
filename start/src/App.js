@@ -32,56 +32,59 @@ class App extends Component {
     this.voteDapp = contract(VoteDappContract);
   }
 
-  getCandidatesList = web3 => {
-    // let voteDappInstance; // contract instance
+  /**
+   * Returns the vote contract instance
+   *
+   * Helper method
+   */
+  getContractInstance = async web3 => {
+    this.voteDapp.setProvider(web3.currentProvider);
+    const instance = await this.voteDapp.deployed();
+    return instance;
+  };
+
+  getCandidatesList = async web3 => {
     /**
      * Get list of all candidates
      * TODO
      *
-     * 1- get current account (user): web3.eth.getAccounts
-     * 2- get contract instance
+     * 1- get current account (user): web3.eth.accounts[0]
+     * 2- get contract instance: await this.getContractInstance(web3)
      * 3- call contract method 'getCandidatesCount': getCandidatesCount.call()
      * 4- loop over candidates and get them all: getCandidate.call(index)
      * 5- add the to local "state" candidates (use addCandidateToList)
      */
   };
 
-  onAddCandidate = (name, account, web3) => {
-    // let voteDappInstance; // contract instance
+  onAddCandidate = async (name, web3) => {
     /**
      * Add new candidate to contract
      *
      * 1- Convert the name from ASCII to HEX: web3.fromAscii
-     * 2- get current account (user)
-     * 3- get contract instance
+     * 2- get current account (user) web3.eth.accounts[0]
+     * 3- get contract instance: await this.getContractInstance(web3)
      * 4- call contract method 'addCandidate': addCandidate(name, {from: account})
      * 5- check for Event "CandidateAdded" in logs
      * 6- display success message: onAddEventSuccess: web3.toUtf8
      */
   };
 
-  onVote = candidate => {
-    // let voteDappInstance; // contract instance
-
+  onVote = async (candidate, web3) => {
     /**
      *  Vote on candidate
      *
-     * 1- get contract instance
-     * 2- get current account (user)
+     * 1- get contract instance: await this.getContractInstance(web3)
+     * 2- get current account (user) web3.eth.accounts[0]
      * 3- call contract method 'submitVote': submitVote(index, {from: account})
      * 4- Display success message 'onVoteSuccess'
      */
   };
 
-
-
-  onCheckResult = () => {
-    // let voteDappInstance; // contract instance
-    
+  onCheckResult = async web3 => {
     /**
      *  Gets winner
      *
-     * 1- get contract instance
+     * 1- get contract instance: await this.getContractInstance(web3)
      * 3- call contract method 'getWinner': getWinner.call()
      * 4- Display winner name and vote count'displayResults'
      */
@@ -113,9 +116,7 @@ class App extends Component {
           key="add"
         >
           <Add
-            onAdd={name =>
-              this.onAddCandidate(name, this.state.accounts[0], this.state.web3)
-            }
+            onAdd={value => this.onAddCandidate(value, this.state.web3)}
             currentTab={this.state.selectedTab}
           />
         </TabPane>
@@ -129,14 +130,14 @@ class App extends Component {
         >
           <Result
             winner={this.state.winner}
-            onCheckResult={this.onCheckResult}
+            onCheckResult={() => this.onCheckResult(this.state.web3)}
           />
         </TabPane>
       </Tabs>
     );
   }
 
-   /**
+  /**
    * Helper functions
    */
   addCandidateToList = (index, voteCount, name) => {
@@ -162,8 +163,8 @@ class App extends Component {
             web3: results.web3
           });
           // Call contract once web3 provided.
+          this.voteDapp.setProvider(results.web3.currentProvider);
           this.getCandidatesList(this.state.web3);
-          voteDapp.setProvider(this.state.web3.currentProvider);
         } else {
           throw Error("web3 error");
         }
@@ -200,7 +201,7 @@ class App extends Component {
       }
     });
   };
-  
+
   onTabChange = key => {
     this.setState({
       selectedTab: key
